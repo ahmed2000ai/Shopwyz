@@ -1,0 +1,162 @@
+// prisma/schema.prisma
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+//
+// Enums
+//
+
+enum Role {
+  OWNER
+  MEMBER
+}
+
+enum Unit {
+  KG
+  G
+  L
+  ML
+  PCS
+  PACK
+}
+
+enum BaseUnit {
+  ML
+  G
+}
+
+//
+// Models
+//
+
+model User {
+  id              String            @id @default(uuid())
+  name            String
+  email           String            @unique
+  passwordHash    String?           // If using local auth
+  externalAuthId  String?           // For OAuth providers (Auth0/Clerk/etc.)
+  createdAt       DateTime          @default(now())
+
+  householdMembers HouseholdMember[]
+  createdListItems ListItem[]       @relation("ListItemCreatedBy")
+}
+
+model Household {
+  id         String            @id @default(uuid())
+  name       String
+  city       String
+  country    String?
+  createdAt  DateTime          @default(now())
+
+  members     HouseholdMember[]
+  lists       List[]
+  preferences Preference[]
+}
+
+model HouseholdMember {
+  id          String     @id @default(uuid())
+  userId      String
+  householdId String
+  role        Role
+  createdAt   DateTime   @default(now())
+
+  user       User       @relation(fields: [userId], references: [id])
+  household  Household  @relation(fields: [householdId], references: [id])
+
+  @@unique([userId, householdId])
+}
+
+model List {
+  id           String      @id @default(uuid())
+  householdId  String
+  name         String
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  household Household @relation(fields: [householdId], references: [id])
+  items     ListItem[]
+}
+
+model ListItem {
+  id               String    @id @default(uuid())
+  listId           String
+  productId        String?
+  name             String
+  quantity         Float
+  unit             Unit
+  notes            String?
+  isChecked        Boolean   @default(false)
+  createdByUserId  String
+  createdAt        DateTime  @default(now())
+
+  list          List    @relation(fields: [listId], references: [id])
+  product       Product @relation(fields: [productId], references: [id])
+  createdByUser User    @relation("ListItemCreatedBy", fields: [createdByUserId], references: [id])
+}
+
+model Product {
+  id               String        @id @default(uuid())
+  name             String
+  brand            String
+  category         String
+  sizeValue        Float
+  sizeUnit         Unit
+  baseUnit         BaseUnit
+  baseUnitPerItem  Float
+  createdAt        DateTime      @default(now())
+
+  listItems   ListItem[]
+  offers      Offer[]
+  preferences Preference[]
+}
+
+model Supermarket {
+  id         String   @id @default(uuid())
+  name       String
+  city       String
+  latitude   Float?
+  longitude  Float?
+  createdAt  DateTime @default(now())
+
+  offers Offer[]
+}
+
+model Offer {
+  id             String   @id @default(uuid())
+  supermarketId  String
+  productId      String
+  offerPrice     Float
+  originalPrice  Float
+  currency       String
+  sizeValue      Float
+  sizeUnit       Unit
+  startDate      DateTime
+  endDate        DateTime
+  createdAt      DateTime @default(now())
+
+  supermarket Supermarket @relation(fields: [supermarketId], references: [id])
+  product     Product     @relation(fields: [productId], references: [id])
+}
+
+model Preference {
+  id                 String    @id @default(uuid())
+  householdId        String
+  productId          String
+  preferredBrand     String?
+  preferredSizeValue Float?
+  preferredSizeUnit  Unit?
+  frequencyDays      Int?
+  lastPurchasedAt    DateTime?
+
+  household Household @relation(fields: [householdId], references: [id])
+  product   Product   @relation(fields: [productId], references: [id])
+
+  @@unique([householdId, productId])
+}
