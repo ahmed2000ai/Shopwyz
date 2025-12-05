@@ -127,7 +127,48 @@ Example: First backend feature – Households (create & list)
 
 ---
 
-## 6. Quick Copy Mini-Prompt (for lazy days)
+## 6. Example – Session 0: Backend Scaffolding & Prisma Wiring
+
+Use this prompt for the very first backend coding session, where the AI sets up the NestJS project in `/backend` and wires Prisma.
+
+> You are helping me set up the initial backend for the Shopwyz project.
+> 
+> Do NOT invent your own structure. Follow these documents as the source of truth:
+> - docs/backend-setup.md
+> - docs/backend-init-plan.md
+> - docs/backend-architecture.md
+> - prisma/schema.prisma
+> - docs/dev-ai-workflow.md
+> 
+> **Goal of this session (Session 0):**
+> - Scaffold a NestJS project in `/backend` using `nest new backend`.
+> - Install and wire Prisma & @prisma/client using the existing `../prisma/schema.prisma`.
+> - Create `PrismaModule` and `PrismaService` in `backend/src/prisma`.
+> - Add the expected npm scripts for Prisma in `backend/package.json`.
+> - Ensure the backend can start (`npm run start:dev`) without errors (even if DB is not yet available).
+> 
+> **Constraints:**
+> - The backend MUST live in `/backend`.
+> - DO NOT move or recreate `prisma/schema.prisma`.
+> - DO NOT modify or move anything in `/docs`.
+> - Use `DATABASE_URL` from `.env` (assume it will be provided later).
+> 
+> **Steps you should follow:**
+> 1. Summarize the plan you will follow in 5–7 steps based on the docs above.
+> 2. Show the command sequence needed (`nest new backend`, prisma install, prisma generate, etc.).
+> 3. Show the new/updated files:
+>    - `backend/package.json` (with Prisma scripts)
+>    - `backend/src/prisma/prisma.module.ts`
+>    - `backend/src/prisma/prisma.service.ts`
+>    - Any bootstrapping changes needed for `.env` config loading.
+> 4. Confirm how Prisma commands reference `../prisma/schema.prisma`.
+> 5. Provide a suggested commit message at the end (e.g. `chore: scaffold NestJS backend and wire Prisma`).
+> 
+> Before writing code, restate the checklist from docs/backend-init-plan.md and mark items as ✔ / ✖ / ~ at the end of the session.
+
+--
+
+## 7. Quick Copy Mini-Prompt (for lazy days)
 
 When you don’t want to think too much, you can just paste this:
 
