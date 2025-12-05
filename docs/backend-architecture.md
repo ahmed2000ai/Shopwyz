@@ -254,25 +254,27 @@ Responsible for integration with external AI services.
 Endpoints:
 
 * `POST /ai/parse-text`
-
   * Input: raw text (e.g. “2kg chicken for grilling, snacks for kids, 3x 1L milk”).
   * Output: structured items as defined in `docs/spec.md`:
-
-    * name
-    * quantity
-    * unit
-    * notes
-    * category
-    * brandPreference (optional)
+    - name
+    - quantity
+    - unit
+    - notes
+    - categoryName (string; must match existing taxonomy if possible)
+    - brandPreference (optional)
 
 * Later:
-
   * `POST /ai/parse-voice` – accept audio, call STT, then text parsing.
 
 This module must:
 
 * Keep prompts and expected JSON schema in a clear place (later in `docs/ai.md`).
-* Never directly modify DB; instead, parsed items are passed to `lists` module for creation.
+* Never directly modify the DB; instead, parsed items are passed to the Lists module for creation.
+* The AI parsing endpoint must return a `categoryName` for each item.
+* The backend must map `categoryName` to an existing Category record:
+  - If a matching category exists → assign `listItem.categoryId`.
+  - If the item has a `productId`, then `product.categoryId` overrides the AI suggestion.
+  - If no matching category is found → leave `categoryId` as `null` (item appears under “Other”).
 
 ---
 
