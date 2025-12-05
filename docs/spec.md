@@ -189,12 +189,15 @@ Input:
 
 Output:
 - JSON array of items:
-  - name  
-  - quantity  
-  - unit  
-  - notes  
-  - category  
-  - optional brand preference  
+  - name
+  - quantity
+  - unit
+  - notes
+  - categoryName (string; must match existing taxonomy if possible)
+  - brandPreference (optional)
+
+- The AI must attempt to classify each parsed item into one of the known product categories.
+  The output should include a `categoryName` field that matches an existing Category record whenever possible.
 
 ### 6.2 Learning
 - Analyze purchase history.
