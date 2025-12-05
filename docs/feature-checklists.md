@@ -55,6 +55,9 @@ Each feature checklist:
   - [ ] `list.created`
   - [ ] `list.updated`
   - [ ] `list.deleted`
+- [ ] When returning a list, include each item's category (if any).
+- [ ] Sort items by category.sortOrder (category without sortOrder or null go last), then item name.
+
 
 ## 2.2 List Item CRUD
 - [ ] Create list item.
@@ -86,6 +89,7 @@ Each feature checklist:
   - [ ] notes
   - [ ] category
   - [ ] brandPreference (optional)
+- [ ] Attempt to assign a category to each parsed item based on the known category taxonomy.
 - [ ] Validate the returned JSON adheres to schema.
 - [ ] Return list of parsed items.
 - [ ] Add error fallback:
@@ -224,6 +228,21 @@ For a given `listId`:
 - [ ] Validate LLM returns required fields.
 - [ ] Test fallback behavior.
 - [ ] Test parsing edge cases.
+
+---
+
+# 9. Categories (Taxonomy)
+
+- [ ] Seed the Category table with the full hierarchy (top-level + subcategories + sortOrder).
+- [ ] Ensure every Product has a valid categoryId.
+- [ ] Ensure ListItem inherits the product’s categoryId when productId is set.
+- [ ] When AI parsing assigns a category, map it to an existing Category record.
+- [ ] Uncategorized items should fall back to a default “Other” group.
+- [ ] List retrieval must return category info.
+- [ ] List items must be sorted by:
+  - [ ] category.sortOrder (ascending, nulls last)
+  - [ ] category.name
+  - [ ] item.name
 
 ---
 
