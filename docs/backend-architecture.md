@@ -37,6 +37,7 @@ src/
   households/
   lists/
   products/
+  categories/
   supermarkets/
   offers/
   preferences/
@@ -160,8 +161,10 @@ Example endpoints:
 
 Responsibilities:
 
-* Enforce household scoping for all operations.
-* Trigger realtime events (e.g. `list.item.created`) via `realtime/` module.
+- Enforce household scoping for all operations.
+- Trigger realtime events (e.g. `list.item.created`) via `realtime/` module.
+- When returning a list, include each item’s category (derived from product or directly from list item).
+- Sort list items by category.sortOrder (nulls last), then category name, then item name so that items are grouped for easier in-store picking.
 
 ---
 
