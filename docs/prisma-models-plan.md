@@ -21,9 +21,7 @@ Represents a user account in the system.
 
 ### Relations
 - households (via HouseholdMembers)
-
-### Notes
-- Optionally support OAuth (Auth0/Clerk) using externalAuthId.
+- createdListItems (reverse relation for items created by the user)
 
 ---
 
@@ -85,15 +83,40 @@ Represents a grocery list associated with a household.
 
 ---
 
-# 5. ListItem Model
+# 5. Category Model (NEW)
 
 ### Purpose
-An item on a grocery list.
+Represents hierarchical product categories (like Carrefour’s taxonomy) for grouping products and list items.
+
+### Fields
+- id (string, uuid, @id)
+- name (string)
+- parentId (string, optional)
+- sortOrder (int, default 0)
+- createdAt (DateTime, default now)
+
+### Relations
+- parent: Category (optional)
+- children: Category[]
+- products: Product[]
+- listItems: ListItem[]
+
+### Notes
+- Supports multiple levels (Fresh Food → Fruits & Vegetables → Fruits).
+- `sortOrder` defines in-store walking order.
+
+---
+
+# 6. ListItem Model
+
+### Purpose
+An item on a grocery list, optionally linked to a product and category.
 
 ### Fields
 - id (string, uuid, @id)
 - listId (string)
 - productId (string, optional)
+- categoryId (string, optional) — NEW
 - name (string) — user visible label
 - quantity (float)
 - unit (enum: KG, G, L, ML, PCS, PACK)
@@ -105,33 +128,43 @@ An item on a grocery list.
 ### Relations
 - list: List
 - product: Product (optional)
+- category: Category (optional) — NEW
 - createdByUser: User
+
+### Notes
+- If a product is known, list item inherits its category automatically.
 
 ---
 
-# 6. Product Model
+# 7. Product Model
 
 ### Purpose
-Canonical product representation for mapping items and offers.
+Canonical product representation for mapping items, offers, and category grouping.
 
 ### Fields
 - id (string, uuid, @id)
 - name (string)
 - brand (string)
-- category (string)
+- categoryId (string) — NEW (replaces old category string)
 - sizeValue (float)
 - sizeUnit (enum: KG, G, L, ML)
 - baseUnit (enum: ML, G)
 - baseUnitPerItem (float)
 - createdAt (DateTime)
 
+### Relations
+- category: Category — NEW
+- listItems: ListItem[]
+- offers: Offer[]
+- preferences: Preference[]
+
 ### Notes
-- baseUnitPerItem = sizeValue converted to smallest unit (e.g. 1L → 1000ml)
-- Used for price-per-unit comparisons.
+- baseUnitPerItem = sizeValue normalized (e.g., 1L → 1000ml)
+- Used for price-per-unit comparison.
 
 ---
 
-# 7. Supermarket Model
+# 8. Supermarket Model
 
 ### Purpose
 Represents supermarkets by city.
@@ -149,7 +182,7 @@ Represents supermarkets by city.
 
 ---
 
-# 8. Offer Model
+# 9. Offer Model
 
 ### Purpose
 Represents time-bound supermarket promotions.
@@ -176,10 +209,10 @@ Represents time-bound supermarket promotions.
 
 ---
 
-# 9. Preference Model
+# 10. Preference Model
 
 ### Purpose
-Tracks household or user preferences over time.
+Tracks household-level buying patterns and preferences.
 
 ### Fields
 - id (string, uuid, @id)
@@ -195,12 +228,9 @@ Tracks household or user preferences over time.
 - household: Household
 - product: Product
 
-### Notes
-- We will determine later whether this should also support user-specific preferences.
-
 ---
 
-# 10. Enums
+# 11. Enums
 
 ### Role
 - OWNER
@@ -220,10 +250,10 @@ Tracks household or user preferences over time.
 
 ---
 
-# 11. Next Steps
+# 12. Next Steps
 
 After this plan is approved:
 
-- Convert it into `prisma/schema.prisma`.
-- Run `npx prisma migrate dev` to create the database.
-- Start implementing modules in the order from `backend-architecture.md`.
+- Ensure `schema.prisma` matches this design.
+- Run `npx prisma migrate dev` to update the database.
+- Begin implementing backend modules following `backend-architecture.md`.
