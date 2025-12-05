@@ -84,28 +84,29 @@ model List {
   items     ListItem[]
 }
 
-model ListItem {
-  id               String    @id @default(uuid())
-  listId           String
-  productId        String?
-  name             String
-  quantity         Float
-  unit             Unit
-  notes            String?
-  isChecked        Boolean   @default(false)
-  createdByUserId  String
-  createdAt        DateTime  @default(now())
+model Category {
+  id        String     @id @default(uuid())
+  name      String
+  parentId  String?
+  sortOrder Int        @default(0)
+  createdAt DateTime   @default(now())
 
-  list          List    @relation(fields: [listId], references: [id])
-  product       Product @relation(fields: [productId], references: [id])
-  createdByUser User    @relation("ListItemCreatedBy", fields: [createdByUserId], references: [id])
+  // Self-relation for hierarchy (e.g. Fresh Food -> Fruit & Veg -> Fruits)
+  parent   Category?   @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children Category[]  @relation("CategoryHierarchy")
+
+  products  Product[]
+  listItems ListItem[]
 }
 
 model Product {
   id               String        @id @default(uuid())
   name             String
   brand            String
-  category         String
+  // NEW: link to category
+  categoryId       String
+  category         Category      @relation(fields: [categoryId], references: [id])
+
   sizeValue        Float
   sizeUnit         Unit
   baseUnit         BaseUnit
@@ -115,6 +116,26 @@ model Product {
   listItems   ListItem[]
   offers      Offer[]
   preferences Preference[]
+}
+
+model ListItem {
+  id               String    @id @default(uuid())
+  listId           String
+  productId        String?
+  // NEW: optional category link
+  categoryId       String?
+  name             String
+  quantity         Float
+  unit             Unit
+  notes            String?
+  isChecked        Boolean   @default(false)
+  createdByUserId  String
+  createdAt        DateTime  @default(now())
+
+  list          List      @relation(fields: [listId], references: [id])
+  product       Product?  @relation(fields: [productId], references: [id])
+  category      Category? @relation(fields: [categoryId], references: [id])
+  createdByUser User      @relation("ListItemCreatedBy", fields: [createdByUserId], references: [id])
 }
 
 model Supermarket {
