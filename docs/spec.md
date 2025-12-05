@@ -16,6 +16,7 @@ Shopwyz is a shared household grocery app that:
 - **Household**: A group of users sharing lists, location, and preferences.
 - **List**: A grocery list (e.g. “Weekly”, “BBQ Party”).
 - **List Item**: A structured item in a list (e.g. “2x 1L whole milk”).
+- **Category**: Hierarchical product categories (e.g. Fresh Food → Fruits & Vegetables → Fruits) used to group products and list items so shoppers can pick items more efficiently in-store.
 - **Product**: Canonical representation (brand, category, base size).
 - **Supermarket**: Store with location (city).
 - **Offer**: Time-bound promotion on a product.
@@ -49,6 +50,13 @@ Shopwyz is a shared household grocery app that:
 - Add/edit/delete items.
 - Check/uncheck purchased items.
 - Real-time sync with household members.
+  
+  **Category-based grouping**
+
+- Each list item is associated with a category, either via its linked product or directly.
+- When displaying a list, items should be grouped by category and ordered by the category’s `sortOrder` (e.g. following typical store layout).
+- Uncategorized items (no category found) are shown in an “Other” or equivalent section.
+
 
 #### 3. AI Input
 - User types or speaks natural language.
