@@ -3,23 +3,30 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 
 describe('AiController (e2e)', () => {
     let app: INestApplication;
     let prisma: PrismaService;
+    let jwtService: JwtService;
     let userId: string;
+    let token: string;
     let householdId: string;
     let listId: string;
     let catFruitId: string;
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
-            imports: [AppModule],
+            imports: [
+                AppModule,
+                JwtModule.register({ secret: process.env.JWT_SECRET || 'dev-secret' }),
+            ],
         }).compile();
 
         app = moduleFixture.createNestApplication();
         prisma = moduleFixture.get<PrismaService>(PrismaService);
+        jwtService = moduleFixture.get<JwtService>(JwtService);
         await app.init();
 
         // Cleanup: delete children before parents
@@ -38,6 +45,7 @@ describe('AiController (e2e)', () => {
             data: { name: 'AI Test User', email: 'ai@test.com', passwordHash: 'hash' },
         });
         userId = user.id;
+        token = jwtService.sign({ sub: userId, email: user.email });
 
         const household = await prisma.household.create({
             data: { name: 'AI Home', city: 'Test City' },
@@ -57,6 +65,10 @@ describe('AiController (e2e)', () => {
             data: { name: 'Fruit', sortOrder: 1 },
         });
         catFruitId = catFruit.id;
+
+        await prisma.category.create({
+            data: { name: 'Dairy', sortOrder: 2 },
+        });
     });
 
     afterAll(async () => {
@@ -66,7 +78,7 @@ describe('AiController (e2e)', () => {
     it('/ai/parse-text (POST) - Parse and Add Items', async () => {
         const response = await request(app.getHttpServer())
             .post('/ai/parse-text')
-            .set('x-user-id', userId)
+            .set('Authorization', `Bearer ${token}`)
             .send({
                 text: 'Buy 1kg Apples and some milk',
                 listId: listId,
@@ -85,10 +97,7 @@ describe('AiController (e2e)', () => {
         expect(appleItem.quantity).toBe(1);
         expect(appleItem.unit).toBe('KG');
 
-        // Verify "Milk" item (Category 'Dairy' does not exist in seed, so categoryId might be null if logic is strict, 
-        // OR the service logic only sets ID if found. The Stub returns categoryName='Dairy'.
-        // Since we didn't seed "Dairy", categoryId should be null or ignored.
-        // Let's check logic: "if (category) categoryId = category.id;" -> so it will be null.
+        // Verify "Milk" item
         const milkItem = createdItems.find((i: any) => i.name === 'Whole Milk');
         expect(milkItem).toBeDefined();
         expect(milkItem.categoryId).not.toBeNull();

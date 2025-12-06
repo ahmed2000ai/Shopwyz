@@ -1,24 +1,28 @@
-import { Controller, Post, Body, Headers, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, UnauthorizedException } from '@nestjs/common';
 import { AiService } from './ai.service';
 import { ParseTextDto } from './dto/parse-text.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller('ai')
+@UseGuards(JwtAuthGuard)
 export class AiController {
     constructor(private readonly aiService: AiService) { }
 
-    private getUserIdFromHeader(userIdHeader: string): string {
-        if (!userIdHeader) {
-            throw new UnauthorizedException('Missing x-user-id header');
+    private getUserId(user: any): string {
+        const userId = user?.userId ?? user?.id ?? user?.sub;
+        if (!userId) {
+            throw new UnauthorizedException('Missing user id in token payload');
         }
-        return userIdHeader;
+        return userId;
     }
 
     @Post('parse-text')
     async parseText(
         @Body() dto: ParseTextDto,
-        @Headers('x-user-id') userIdHeader: string,
+        @CurrentUser() user: any,
     ) {
-        const userId = this.getUserIdFromHeader(userIdHeader);
+        const userId = this.getUserId(user);
         return this.aiService.parseAndAddItems(userId, dto);
     }
 }

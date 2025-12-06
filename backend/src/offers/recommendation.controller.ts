@@ -2,30 +2,23 @@ import {
   Controller,
   Get,
   Param,
-  Headers,
-  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { OffersService } from './offers.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CurrentUser } from '../auth/current-user.decorator';
 
 @Controller('lists')
+@UseGuards(JwtAuthGuard)
 export class RecommendationController {
   constructor(private readonly offersService: OffersService) { }
-
-  private getUserIdFromHeader(userIdHeader?: string): string {
-    if (!userIdHeader) {
-      throw new UnauthorizedException('Missing x-user-id header');
-    }
-    return userIdHeader;
-  }
 
   // GET /lists/:id/recommendation
   @Get(':id/recommendation')
   async getRecommendation(
     @Param('id') listId: string,
-    @Headers('x-user-id') userIdHeader: string,
+    @CurrentUser() user: any,
   ) {
-    const userId = this.getUserIdFromHeader(userIdHeader);
-    // Adjust method name if your service uses a different one
-    return this.offersService.getBestSupermarketForList(listId, userId);
+    return this.offersService.getBestSupermarketForList(listId, user.id);
   }
 }

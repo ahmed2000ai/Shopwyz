@@ -3,12 +3,15 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Role, Unit, BaseUnit } from '@prisma/client';
 
 describe('OffersController (e2e)', () => {
     let app: INestApplication;
     let prisma: PrismaService;
+    let jwtService: JwtService;
     let userId: string;
+    let token: string;
     let listId: string;
     let storeAId: string; // Riyadh
     let storeBId: string; // Riyadh
@@ -16,11 +19,15 @@ describe('OffersController (e2e)', () => {
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
-            imports: [AppModule],
+            imports: [
+                AppModule,
+                JwtModule.register({ secret: process.env.JWT_SECRET || 'dev-secret' }),
+            ],
         }).compile();
 
         app = moduleFixture.createNestApplication();
         prisma = moduleFixture.get<PrismaService>(PrismaService);
+        jwtService = moduleFixture.get<JwtService>(JwtService);
         await app.init();
 
         // Cleanup: children before parents
@@ -39,6 +46,7 @@ describe('OffersController (e2e)', () => {
             data: { name: 'Rec User', email: 'rec@test.com', passwordHash: 'hash' },
         });
         userId = user.id;
+        token = jwtService.sign({ sub: userId, email: user.email });
 
         const household = await prisma.household.create({
             data: { name: 'Riyadh Home', city: 'Riyadh' },
@@ -158,7 +166,7 @@ describe('OffersController (e2e)', () => {
     it('/lists/:id/recommendation (GET) - Validates Best Store', async () => {
         const res = await request(app.getHttpServer())
             .get(`/lists/${listId}/recommendation`)
-            .set('x-user-id', userId)
+            .set('Authorization', `Bearer ${token}`)
             .expect(200);
 
         const recs = res.body.supermarkets;

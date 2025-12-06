@@ -3,12 +3,15 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { AppModule } from './../src/app.module';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { Role, Unit } from '@prisma/client';
 
 describe('ListsController (e2e)', () => {
     let app: INestApplication;
     let prisma: PrismaService;
+    let jwtService: JwtService;
     let userId: string;
+    let token: string;
     let householdId: string;
     let listId: string;
     let catFruitId: string;
@@ -16,29 +19,34 @@ describe('ListsController (e2e)', () => {
 
     beforeAll(async () => {
         const moduleFixture: TestingModule = await Test.createTestingModule({
-            imports: [AppModule],
+            imports: [
+                AppModule,
+                JwtModule.register({ secret: process.env.JWT_SECRET || 'dev-secret' }),
+            ],
         }).compile();
 
         app = moduleFixture.createNestApplication();
         prisma = moduleFixture.get<PrismaService>(PrismaService);
+        jwtService = moduleFixture.get<JwtService>(JwtService);
         await app.init();
 
         // Cleanup
         await prisma.listItem.deleteMany();
         await prisma.list.deleteMany();
-        await prisma.offer.deleteMany();          // NEW: offers depend on product & supermarket
+        await prisma.offer.deleteMany();
         await prisma.product.deleteMany();
         await prisma.category.deleteMany();
         await prisma.householdMember.deleteMany();
-        await prisma.supermarket.deleteMany().catch(() => { }); // optional, if used in this test
+        await prisma.supermarket.deleteMany().catch(() => { });
         await prisma.household.deleteMany();
-        await prisma.user.deleteMany().catch(() => { });        // optional, if user created in this test
+        await prisma.user.deleteMany().catch(() => { });
 
         // Seed
         const user = await prisma.user.create({
             data: { name: 'E2E User', email: 'e2e@test.com', passwordHash: 'hash' },
         });
         userId = user.id;
+        token = jwtService.sign({ sub: userId, email: user.email });
 
         const household = await prisma.household.create({
             data: { name: 'E2E Home', city: 'Test City' },
@@ -50,8 +58,6 @@ describe('ListsController (e2e)', () => {
         });
 
         // Categories
-        // Fruit: Sort 1
-        // Candy: Sort 2
         const catFruit = await prisma.category.create({
             data: { name: 'Fruit', sortOrder: 1 },
         });
@@ -70,7 +76,7 @@ describe('ListsController (e2e)', () => {
     it('/households/:id/lists (POST) - Create List', async () => {
         const res = await request(app.getHttpServer())
             .post(`/households/${householdId}/lists`)
-            .set('x-user-id', userId)
+            .set('Authorization', `Bearer ${token}`)
             .send({ name: 'Weekly Groceries' })
             .expect(201);
 
@@ -82,7 +88,7 @@ describe('ListsController (e2e)', () => {
     it('/households/:id/lists (GET) - List Lists', async () => {
         const res = await request(app.getHttpServer())
             .get(`/households/${householdId}/lists`)
-            .set('x-user-id', userId)
+            .set('Authorization', `Bearer ${token}`)
             .expect(200);
 
         expect(Array.isArray(res.body)).toBe(true);
@@ -94,7 +100,7 @@ describe('ListsController (e2e)', () => {
         // 1. Add Candy (Order 2)
         await request(app.getHttpServer())
             .post(`/lists/${listId}/items`)
-            .set('x-user-id', userId)
+            .set('Authorization', `Bearer ${token}`)
             .send({
                 name: 'Chocolate Bar',
                 quantity: 1,
@@ -106,7 +112,7 @@ describe('ListsController (e2e)', () => {
         // 2. Add Uncategorized Item (Should be Last)
         await request(app.getHttpServer())
             .post(`/lists/${listId}/items`)
-            .set('x-user-id', userId)
+            .set('Authorization', `Bearer ${token}`)
             .send({
                 name: 'Mystery Item',
                 quantity: 1,
@@ -117,7 +123,7 @@ describe('ListsController (e2e)', () => {
         // 3. Add Fruit (Order 1) - Should be First
         await request(app.getHttpServer())
             .post(`/lists/${listId}/items`)
-            .set('x-user-id', userId)
+            .set('Authorization', `Bearer ${token}`)
             .send({
                 name: 'Apple',
                 quantity: 1,
@@ -130,7 +136,7 @@ describe('ListsController (e2e)', () => {
     it('/lists/:id/items (GET) - Verify Sort Order', async () => {
         const res = await request(app.getHttpServer())
             .get(`/lists/${listId}/items`)
-            .set('x-user-id', userId)
+            .set('Authorization', `Bearer ${token}`)
             .expect(200);
 
         const items = res.body;

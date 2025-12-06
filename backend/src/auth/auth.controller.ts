@@ -1,24 +1,27 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { PrismaService } from 'src/prisma/prisma.service';
+import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
+import { AuthService } from './auth.service';
+import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { CurrentUser } from './current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(private readonly authService: AuthService) { }
+
+    @Post('signup')
+    signup(@Body() dto: SignupDto) {
+        return this.authService.signup(dto);
+    }
 
     @Post('login')
-    async login(@Body() loginDto: LoginDto) {
-        // Stub implementation: Upsert user based on email
-        // In real app, we'd verify password or external token
-        const user = await this.prisma.user.upsert({
-            where: { email: loginDto.email },
-            update: {},
-            create: {
-                email: loginDto.email,
-                name: loginDto.name || 'Anonymous',
-                passwordHash: 'stub_hash', // Dummy
-            },
-        });
+    login(@Body() dto: LoginDto) {
+        return this.authService.login(dto);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get('me')
+    getProfile(@CurrentUser() user: any) {
         return user;
     }
 }
