@@ -35,16 +35,16 @@ Goal: A working login page at `/login` that talks to the backend.
 
 Goal: Show all households for the current user.
 
-- [ ] Add `getHouseholds()` to `src/lib/api.ts`:
-  - [ ] Calls `GET /households` (or appropriate endpoint).
-  - [ ] Sends `Authorization: Bearer <token>` header.
-- [ ] Create `src/app/households/page.tsx`:
-  - [ ] On mount, read `shopwyz_token`.
-    - [ ] If missing, redirect to `/login`.
-  - [ ] Call `getHouseholds()` and display:
-    - [ ] Household name.
-    - [ ] City (if available).
-  - [ ] Clicking a household row navigates to `/households/[householdId]/lists`.
+- [x] Add `getHouseholds()` to `src/lib/api.ts`:
+  - [x] Calls `GET /households` (or appropriate endpoint).
+  - [x] Sends `Authorization: Bearer <token>` header.
+- [x] Create `src/app/households/page.tsx`:
+  - [x] On mount, read `shopwyz_token`.
+    - [x] If missing, redirect to `/login`.
+  - [x] Call `getHouseholds()` and display:
+    - [x] Household name.
+    - [x] City (if available).
+  - [x] Clicking a household row navigates to `/households/[householdId]/lists`.
 
 ---
 
