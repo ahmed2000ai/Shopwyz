@@ -49,6 +49,9 @@ export class AiService {
             throw new InternalServerErrorException('GEMINI_API_KEY is not set in environment');
         }
 
+        // Use latest stable flash model for v1beta
+        const model = 'gemini-1.5-flash-002';
+
         const prompt = `
 You are a grocery list parser. Convert each input line into a structured grocery item.
 Rules:
@@ -71,7 +74,7 @@ Example output:
 ]
         `.trim();
 
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
