@@ -11,6 +11,8 @@ backend/dist/
 # Env files
 .env
 .env.*
+!.env.example
+!backend/.env.example
 
 # Prisma local artifacts (if you ever use SQLite or local files)
 prisma/*.db

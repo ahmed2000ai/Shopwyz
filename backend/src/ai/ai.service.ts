@@ -176,7 +176,7 @@ Example output:
             // Combine brand + name for display if brand is provided
             const displayName = pItem.brand ? `${pItem.brand} ${pItem.name}`.trim() : pItem.name;
 
-            const notesParts = [];
+            const notesParts: string[] = [];
             if (pItem.description) notesParts.push(pItem.description);
             if (pItem.notes) notesParts.push(pItem.notes);
             if (pItem.sizeValue && pItem.sizeUnit) {
