@@ -6,6 +6,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateListDto } from './dto/create-list.dto';
 import { CreateListItemDto } from './dto/create-list-item.dto';
+import { ListItem } from '@prisma/client';
 
 @Injectable()
 export class ListsService {
@@ -44,7 +45,23 @@ export class ListsService {
         return this.prisma.list.findMany({
             where: { householdId },
             orderBy: { updatedAt: 'desc' },
+            include: {
+                _count: { select: { items: true } },
+            },
         });
+    }
+
+    // Get a single list with metadata
+    async getListById(listId: string, userId: string) {
+        const list = await this.prisma.list.findUnique({
+            where: { id: listId },
+            include: { household: true },
+        });
+        if (!list) {
+            throw new NotFoundException('List not found');
+        }
+        await this.ensureUserInHousehold(userId, list.householdId);
+        return list;
     }
 
     // Add Item to List
@@ -153,5 +170,38 @@ export class ListsService {
             // Rule 4: Item Name
             return a.name.localeCompare(b.name);
         });
+    }
+
+    private async getListItemOrThrow(listItemId: string): Promise<ListItem & { list: { householdId: string } }> {
+        const item = await this.prisma.listItem.findUnique({
+            where: { id: listItemId },
+            include: {
+                list: true,
+            },
+        });
+        if (!item) {
+            throw new NotFoundException('List item not found');
+        }
+        return item as any;
+    }
+
+    async toggleItemChecked(listItemId: string, userId: string, isChecked: boolean) {
+        const item = await this.getListItemOrThrow(listItemId);
+        await this.ensureUserInHousehold(userId, item.list.householdId);
+
+        return this.prisma.listItem.update({
+            where: { id: listItemId },
+            data: { isChecked },
+        });
+    }
+
+    async deleteItem(listItemId: string, userId: string) {
+        const item = await this.getListItemOrThrow(listItemId);
+        await this.ensureUserInHousehold(userId, item.list.householdId);
+
+        await this.prisma.listItem.delete({
+            where: { id: listItemId },
+        });
+        return { success: true };
     }
 }

@@ -47,6 +47,16 @@ export class ListsController {
         return this.listsService.getLists(householdId, userId);
     }
 
+    // GET /lists/:listId
+    @Get('lists/:listId')
+    async getList(
+        @Param('listId') listId: string,
+        @CurrentUser() user: any,
+    ) {
+        const userId = this.getUserId(user);
+        return this.listsService.getListById(listId, userId);
+    }
+
     // POST /lists/:listId/items
     @Post('lists/:listId/items')
     async addItem(
@@ -66,5 +76,35 @@ export class ListsController {
     ) {
         const userId = this.getUserId(user);
         return this.listsService.getListItems(listId, userId);
+    }
+
+    // POST /lists/:listId/items/:itemId/check
+    @Post('lists/:listId/items/:itemId/check')
+    async checkItem(
+        @Param('itemId') itemId: string,
+        @CurrentUser() user: any,
+    ) {
+        const userId = this.getUserId(user);
+        return this.listsService.toggleItemChecked(itemId, userId, true);
+    }
+
+    // POST /lists/:listId/items/:itemId/uncheck
+    @Post('lists/:listId/items/:itemId/uncheck')
+    async uncheckItem(
+        @Param('itemId') itemId: string,
+        @CurrentUser() user: any,
+    ) {
+        const userId = this.getUserId(user);
+        return this.listsService.toggleItemChecked(itemId, userId, false);
+    }
+
+    // DELETE /lists/:listId/items/:itemId
+    @Post('lists/:listId/items/:itemId/delete')
+    async deleteItem(
+        @Param('itemId') itemId: string,
+        @CurrentUser() user: any,
+    ) {
+        const userId = this.getUserId(user);
+        return this.listsService.deleteItem(itemId, userId);
     }
 }
